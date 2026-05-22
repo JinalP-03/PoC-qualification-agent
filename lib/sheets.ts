@@ -23,25 +23,18 @@ const COLUMNS = {
   PROCESSED_AT: 10,
 };
 
-function getAuthClient() {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const key = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-  if (!email || !key) {
-    throw new Error(
-      "Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_PRIVATE_KEY env vars"
-    );
-  }
-
-  return new google.auth.JWT({
-    email,
-    key,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  });
+/** Build an OAuth2 client from the user's access token stored in their session. */
+function getOAuthClient(accessToken: string) {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  oauth2Client.setCredentials({ access_token: accessToken });
+  return oauth2Client;
 }
 
-export async function fetchPendingPOCs(): Promise<POCRequest[]> {
-  const auth = getAuthClient();
+export async function fetchPendingPOCs(accessToken: string): Promise<POCRequest[]> {
+  const auth = getOAuthClient(accessToken);
   const sheets = google.sheets({ version: "v4", auth });
 
   const response = await sheets.spreadsheets.values.get({
@@ -60,15 +53,14 @@ export async function fetchPendingPOCs(): Promise<POCRequest[]> {
     const status = row[COLUMNS.STATUS] || "";
     const researchNotes = row[COLUMNS.RESEARCH_NOTES] || "";
 
-    // Skip header row artifacts or empty rows
     if (!company || !contactName) return;
 
-    // Only process rows with no research notes yet (blank Status column)
+    // Only process rows with no research notes yet and not already running
     if (status && status !== "pending") return;
-    if (researchNotes) return; // already processed
+    if (researchNotes) return;
 
     pending.push({
-      rowIndex: idx + 2, // Sheet rows start at 1, header at 1, data at 2
+      rowIndex: idx + 2, // header is row 1, data starts at row 2
       company,
       contactName,
       contactRole,
@@ -80,8 +72,8 @@ export async function fetchPendingPOCs(): Promise<POCRequest[]> {
   return pending;
 }
 
-export async function fetchAllPOCs(): Promise<POCRequest[]> {
-  const auth = getAuthClient();
+export async function fetchAllPOCs(accessToken: string): Promise<POCRequest[]> {
+  const auth = getOAuthClient(accessToken);
   const sheets = google.sheets({ version: "v4", auth });
 
   const response = await sheets.spreadsheets.values.get({
@@ -120,34 +112,34 @@ export async function fetchAllPOCs(): Promise<POCRequest[]> {
   return all;
 }
 
-export async function updatePOCRow(poc: POCRequest): Promise<void> {
-  const auth = getAuthClient();
+export async function updatePOCRow(poc: POCRequest, accessToken: string): Promise<void> {
+  const auth = getOAuthClient(accessToken);
   const sheets = google.sheets({ version: "v4", auth });
 
   const range = `${SHEET_RANGE}!E${poc.rowIndex}:K${poc.rowIndex}`;
-
-  const values = [
-    [
-      poc.status,
-      poc.technicalComplexity || "",
-      poc.buyerLevel || "",
-      poc.routing || "",
-      poc.researchNotes || "",
-      poc.demoBrief || "",
-      poc.processedAt || new Date().toISOString(),
-    ],
-  ];
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
     range,
     valueInputOption: "RAW",
-    requestBody: { values },
+    requestBody: {
+      values: [
+        [
+          poc.status,
+          poc.technicalComplexity || "",
+          poc.buyerLevel || "",
+          poc.routing || "",
+          poc.researchNotes || "",
+          poc.demoBrief || "",
+          poc.processedAt || new Date().toISOString(),
+        ],
+      ],
+    },
   });
 }
 
-export async function markPOCProcessing(rowIndex: number): Promise<void> {
-  const auth = getAuthClient();
+export async function markPOCProcessing(rowIndex: number, accessToken: string): Promise<void> {
+  const auth = getOAuthClient(accessToken);
   const sheets = google.sheets({ version: "v4", auth });
 
   await sheets.spreadsheets.values.update({
@@ -158,8 +150,8 @@ export async function markPOCProcessing(rowIndex: number): Promise<void> {
   });
 }
 
-export async function ensureSheetHeaders(): Promise<void> {
-  const auth = getAuthClient();
+export async function ensureSheetHeaders(accessToken: string): Promise<void> {
+  const auth = getOAuthClient(accessToken);
   const sheets = google.sheets({ version: "v4", auth });
 
   const headers = [
@@ -178,7 +170,6 @@ export async function ensureSheetHeaders(): Promise<void> {
     ],
   ];
 
-  // Check if row 1 already has headers
   const check = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
     range: `${SHEET_RANGE}!A1:K1`,

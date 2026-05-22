@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { POCRequest } from "@/lib/types";
 import POCCard from "@/components/POCCard";
 import AgentControls from "@/components/AgentControls";
 import StatsBar from "@/components/StatsBar";
 import DetailModal from "@/components/DetailModal";
+import { SignInButton, SignOutButton } from "@/components/AuthButton";
 
 export default function Dashboard() {
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated" && !!session?.accessToken;
+
   const [pocs, setPocs] = useState<POCRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
@@ -17,6 +22,7 @@ export default function Dashboard() {
   const [filter, setFilter] = useState<"all" | "pending" | "researching" | "qualified" | "error">("all");
 
   const fetchPOCs = useCallback(async () => {
+    if (!isAuthenticated) return;
     try {
       const res = await fetch("/api/pocs");
       const data = await res.json();
@@ -31,14 +37,18 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     fetchPOCs();
     const ms = parseInt(process.env.NEXT_PUBLIC_POLL_INTERVAL_MS || "30000");
     const interval = setInterval(fetchPOCs, ms);
     return () => clearInterval(interval);
-  }, [fetchPOCs]);
+  }, [fetchPOCs, isAuthenticated]);
 
   const handleRunAgent = async () => {
     setRunning(true);
@@ -63,6 +73,36 @@ export default function Dashboard() {
     filter === "all" ? true : p.status === filter
   );
 
+  // Sign-in screen
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <svg className="animate-spin h-8 w-8 text-blue-400" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-6 px-4">
+        <div className="text-center">
+          <div className="text-5xl mb-4">⚡</div>
+          <h1 className="text-3xl font-bold text-white mb-2">POC Qualification Agent</h1>
+          <p className="text-gray-400 max-w-md">
+            Sign in with the Google account that owns your Sheet. We'll request read/write access to Google Sheets only.
+          </p>
+        </div>
+        <SignInButton />
+        <p className="text-xs text-gray-600 max-w-sm text-center">
+          Your tokens are stored in a secure, encrypted session cookie and never leave your browser.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
@@ -76,12 +116,18 @@ export default function Dashboard() {
               Auto-qualifies prospects · Routes to the right resource · Generates demo briefs
             </p>
           </div>
-          <AgentControls
-            running={running}
-            lastRun={lastRun}
-            onRun={handleRunAgent}
-            onRefresh={fetchPOCs}
-          />
+          <div className="flex items-center gap-4">
+            <AgentControls
+              running={running}
+              lastRun={lastRun}
+              onRun={handleRunAgent}
+              onRefresh={fetchPOCs}
+            />
+            <SignOutButton
+              name={session?.user?.name}
+              image={session?.user?.image}
+            />
+          </div>
         </div>
       </header>
 

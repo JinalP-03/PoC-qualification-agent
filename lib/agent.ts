@@ -1,9 +1,9 @@
 import { fetchPendingPOCs, markPOCProcessing, updatePOCRow } from "./sheets";
 import { researchCompany, researchBuyer } from "./research";
 import { qualifyPOC, generateDemoBrief } from "./qualify";
-import { POCRequest, AgentRunResult } from "./types";
+import { POCRequest, AgentRunResult, CompanyInsights, BuyerInsights } from "./types";
 
-export async function runAgent(): Promise<AgentRunResult> {
+export async function runAgent(accessToken: string): Promise<AgentRunResult> {
   const result: AgentRunResult = {
     processed: 0,
     skipped: 0,
@@ -14,7 +14,7 @@ export async function runAgent(): Promise<AgentRunResult> {
   let pendingPOCs: POCRequest[];
 
   try {
-    pendingPOCs = await fetchPendingPOCs();
+    pendingPOCs = await fetchPendingPOCs(accessToken);
   } catch (err) {
     throw new Error(`Failed to fetch POCs from Google Sheets: ${err}`);
   }
@@ -28,7 +28,7 @@ export async function runAgent(): Promise<AgentRunResult> {
       console.log(`[Agent] Processing: ${poc.company} - ${poc.contactName}`);
 
       // Mark as in-progress immediately so concurrent runs skip it
-      await markPOCProcessing(poc.rowIndex);
+      await markPOCProcessing(poc.rowIndex, accessToken);
 
       // Step 1: Research
       console.log(`[Agent] Researching company: ${poc.company}`);
@@ -82,7 +82,7 @@ export async function runAgent(): Promise<AgentRunResult> {
       };
 
       // Step 6: Write back to Google Sheets
-      await updatePOCRow(updatedPOC);
+      await updatePOCRow(updatedPOC, accessToken);
 
       result.processed++;
       result.results.push(updatedPOC);
@@ -93,7 +93,6 @@ export async function runAgent(): Promise<AgentRunResult> {
     } catch (err) {
       console.error(`[Agent] ✗ Error processing ${poc.company}:`, err);
 
-      // Write error back to sheet
       const errorPOC: POCRequest = {
         ...poc,
         status: "error",
@@ -102,7 +101,7 @@ export async function runAgent(): Promise<AgentRunResult> {
       };
 
       try {
-        await updatePOCRow(errorPOC);
+        await updatePOCRow(errorPOC, accessToken);
       } catch (writeErr) {
         console.error(`[Agent] Failed to write error to sheet:`, writeErr);
       }
@@ -116,8 +115,8 @@ export async function runAgent(): Promise<AgentRunResult> {
 }
 
 function buildResearchNotes(
-  company: ReturnType<typeof researchCompany> extends Promise<infer T> ? T : never,
-  buyer: ReturnType<typeof researchBuyer> extends Promise<infer T> ? T : never,
+  company: CompanyInsights,
+  buyer: BuyerInsights,
   qualification: { technicalComplexity: string; buyerLevel: string; routing: string; reasoning: string }
 ): string {
   return [

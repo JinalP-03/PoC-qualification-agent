@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { ensureSheetHeaders } from "@/lib/sheets";
 
 export async function POST() {
+  const session = await auth();
+
+  if (!session?.accessToken) {
+    return NextResponse.json(
+      { success: false, error: "Not authenticated" },
+      { status: 401 }
+    );
+  }
+
   try {
-    await ensureSheetHeaders();
+    await ensureSheetHeaders(session.accessToken);
     return NextResponse.json({
       success: true,
       message: "Sheet headers verified/created",
