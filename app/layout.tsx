@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "POC Qualification Agent",
-  description: "Auto-qualifies POC requests and routes to the right resource",
+  title: "PoC Qualification Agent",
+  description: "Auto-qualifies PoC requests and routes to the right resource",
 };
 
 export default function RootLayout({

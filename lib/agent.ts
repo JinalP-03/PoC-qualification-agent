@@ -1,7 +1,7 @@
-import { fetchPendingPOCs, markPOCProcessing, updatePOCRow } from "./sheets";
+import { fetchPendingPOCs, markPoCProcessing, updatePoCRow, writeProcessingStatus } from "./sheets";
 import { researchCompany, researchBuyer } from "./research";
-import { qualifyPOC, generateDemoBrief } from "./qualify";
-import { POCRequest, AgentRunResult, CompanyInsights, BuyerInsights } from "./types";
+import { qualifyPOC, generateDemoBrief, generateDraftEmail, analyseBusinessFit } from "./qualify";
+import { PoCRequest, AgentRunResult, CompanyInsights, BuyerInsights } from "./types";
 
 export async function runAgent(accessToken: string): Promise<AgentRunResult> {
   const result: AgentRunResult = {
@@ -11,64 +11,55 @@ export async function runAgent(accessToken: string): Promise<AgentRunResult> {
     results: [],
   };
 
-  let pendingPOCs: POCRequest[];
+  let pendingPoCs: PoCRequest[];
 
   try {
-    pendingPOCs = await fetchPendingPOCs(accessToken);
+    pendingPoCs = await fetchPendingPOCs(accessToken);
   } catch (err) {
-    throw new Error(`Failed to fetch POCs from Google Sheets: ${err}`);
+    throw new Error(`Failed to fetch PoCs from Google Sheets: ${err}`);
   }
 
-  if (pendingPOCs.length === 0) {
+  if (pendingPoCs.length === 0) {
     return result;
   }
 
-  for (const poc of pendingPOCs) {
+  for (const poc of pendingPoCs) {
     try {
-      console.log(`[Agent] Processing: ${poc.company} - ${poc.contactName}`);
-
       // Mark as in-progress immediately so concurrent runs skip it
-      await markPOCProcessing(poc.rowIndex, accessToken);
+      await markPoCProcessing(poc.rowIndex, accessToken);
+      await writeProcessingStatus(accessToken, poc.rowIndex, poc.company);
 
-      // Step 1: Research
-      console.log(`[Agent] Researching company: ${poc.company}`);
+      // Step 1: Research (sequential — buyer research may use company context)
       const companyInsights = await researchCompany(poc.company);
-
-      console.log(`[Agent] Researching buyer: ${poc.contactName}`);
-      const buyerInsights = await researchBuyer(
-        poc.contactName,
-        poc.contactRole,
-        poc.company
-      );
+      const buyerInsights = await researchBuyer(poc.contactName, poc.contactRole, poc.company);
 
       // Step 2: Qualify
-      console.log(`[Agent] Qualifying POC...`);
       const qualification = await qualifyPOC(
-        poc.company,
-        poc.contactName,
-        poc.contactRole,
-        poc.useCase,
-        companyInsights,
-        buyerInsights
+        poc.company, poc.contactName, poc.contactRole, poc.useCase,
+        companyInsights, buyerInsights
       );
 
-      // Step 3: Generate brief
-      console.log(`[Agent] Generating demo brief...`);
-      const demoBrief = await generateDemoBrief(
-        poc.company,
-        poc.contactName,
-        poc.contactRole,
-        poc.useCase,
-        companyInsights,
-        buyerInsights,
-        qualification
-      );
+      // Step 3: Generate brief, draft email, and business fit in parallel
+      const [demoBrief, draftEmail, businessFitResult] = await Promise.all([
+        generateDemoBrief(
+          poc.company, poc.contactName, poc.contactRole, poc.useCase,
+          companyInsights, buyerInsights, qualification
+        ),
+        generateDraftEmail(
+          poc.company, poc.contactName, poc.contactRole, poc.useCase,
+          companyInsights, buyerInsights, qualification
+        ),
+        analyseBusinessFit(
+          poc.company, poc.contactName, poc.contactRole,
+          companyInsights, buyerInsights
+        ),
+      ]);
 
       // Step 4: Build research notes
       const researchNotes = buildResearchNotes(companyInsights, buyerInsights, qualification);
 
-      // Step 5: Update the POC object
-      const updatedPOC: POCRequest = {
+      // Step 5: Assemble and write back to sheet
+      const updatedPoC: PoCRequest = {
         ...poc,
         status: "qualified",
         technicalComplexity: qualification.technicalComplexity,
@@ -76,24 +67,22 @@ export async function runAgent(accessToken: string): Promise<AgentRunResult> {
         routing: qualification.routing,
         researchNotes,
         demoBrief,
+        draftEmail,
+        businessFit: businessFitResult.score,
+        businessFitReasoning: businessFitResult.reasoning,
         companyInsights,
         buyerInsights,
         processedAt: new Date().toISOString(),
       };
 
-      // Step 6: Write back to Google Sheets
-      await updatePOCRow(updatedPOC, accessToken);
+      await updatePoCRow(updatedPoC, accessToken);
 
       result.processed++;
-      result.results.push(updatedPOC);
-
-      console.log(
-        `[Agent] ✓ Done: ${poc.company} → ${qualification.routing} (${qualification.technicalComplexity} / ${qualification.buyerLevel})`
-      );
+      result.results.push(updatedPoC);
     } catch (err) {
-      console.error(`[Agent] ✗ Error processing ${poc.company}:`, err);
+      console.error(`[Agent] Error processing ${poc.company}:`, err);
 
-      const errorPOC: POCRequest = {
+      const errorPoC: PoCRequest = {
         ...poc,
         status: "error",
         researchNotes: `Error: ${err instanceof Error ? err.message : String(err)}`,
@@ -101,13 +90,13 @@ export async function runAgent(accessToken: string): Promise<AgentRunResult> {
       };
 
       try {
-        await updatePOCRow(errorPOC, accessToken);
+        await updatePoCRow(errorPoC, accessToken);
       } catch (writeErr) {
         console.error(`[Agent] Failed to write error to sheet:`, writeErr);
       }
 
       result.errors++;
-      result.results.push(errorPOC);
+      result.results.push(errorPoC);
     }
   }
 

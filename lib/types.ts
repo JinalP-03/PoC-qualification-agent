@@ -4,21 +4,25 @@ export type ResourceRouting =
   | "Product Engineer Required"
   | "Sales Engineer OK"
   | "AE Can Handle";
-export type POCStatus = "pending" | "researching" | "qualified" | "error";
+export type PoCStatus = "pending" | "researching" | "qualified" | "error";
+export type BusinessFit = "HIGH" | "MEDIUM" | "LOW";
 
-export interface POCRequest {
+export interface PoCRequest {
   rowIndex: number;
   company: string;
   contactName: string;
   contactRole: string;
   useCase: string;
   // Populated after research
-  status: POCStatus;
+  status: PoCStatus;
   technicalComplexity?: TechnicalComplexity;
   buyerLevel?: BuyerLevel;
   routing?: ResourceRouting;
   researchNotes?: string;
   demoBrief?: string;
+  draftEmail?: string;
+  businessFit?: BusinessFit;
+  businessFitReasoning?: string;
   companyInsights?: CompanyInsights;
   buyerInsights?: BuyerInsights;
   processedAt?: string;
@@ -48,9 +52,18 @@ export interface QualificationResult {
   reasoning: string;
 }
 
+export interface BusinessFitResult {
+  score: BusinessFit;
+  fundingStage: string;
+  companySize: string;
+  growthSignals: string;
+  budgetAuthority: string;
+  reasoning: string;
+}
+
 export interface AgentRunResult {
   processed: number;
   skipped: number;
   errors: number;
-  results: POCRequest[];
+  results: PoCRequest[];
 }

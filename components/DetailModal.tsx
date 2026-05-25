@@ -1,6 +1,6 @@
 "use client";
 
-import { POCRequest } from "@/lib/types";
+import { PoCRequest } from "@/lib/types";
 
 const complexityColor = (c?: string) => {
   if (c === "HIGH") return "bg-red-900/50 text-red-300 border border-red-700";
@@ -24,7 +24,7 @@ export default function DetailModal({
   poc,
   onClose,
 }: {
-  poc: POCRequest;
+  poc: PoCRequest;
   onClose: () => void;
 }) {
   return (

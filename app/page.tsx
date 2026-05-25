@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { POCRequest } from "@/lib/types";
-import POCCard from "@/components/POCCard";
+import { PoCRequest } from "@/lib/types";
+import PoCCard from "@/components/PoCCard";
 import AgentControls from "@/components/AgentControls";
 import StatsBar from "@/components/StatsBar";
 import DetailModal from "@/components/DetailModal";
@@ -13,12 +13,12 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated" && !!session?.accessToken;
 
-  const [pocs, setPocs] = useState<POCRequest[]>([]);
+  const [pocs, setPocs] = useState<PoCRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [lastRun, setLastRun] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPOC, setSelectedPOC] = useState<POCRequest | null>(null);
+  const [selectedPoC, setSelectedPoC] = useState<PoCRequest | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "researching" | "qualified" | "error">("all");
 
   const fetchPOCs = useCallback(async () => {
@@ -30,7 +30,7 @@ export default function Dashboard() {
         setPocs(data.pocs);
         setError(null);
       } else {
-        setError(data.error || "Failed to fetch POCs");
+        setError(data.error || "Failed to fetch PoCs");
       }
     } catch {
       setError("Network error fetching POCs");
@@ -90,7 +90,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-6 px-4">
         <div className="text-center">
           <div className="text-5xl mb-4">⚡</div>
-          <h1 className="text-3xl font-bold text-white mb-2">POC Qualification Agent</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">PoC Qualification Agent</h1>
           <p className="text-gray-400 max-w-md">
             Sign in with the Google account that owns your Sheet. We'll request read/write access to Google Sheets only.
           </p>
@@ -110,7 +110,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="text-blue-400">⚡</span> POC Qualification Agent
+              <span className="text-blue-400">⚡</span> PoC Qualification Agent
             </h1>
             <p className="text-xs text-gray-400 mt-0.5">
               Auto-qualifies prospects · Routes to the right resource · Generates demo briefs
@@ -166,14 +166,14 @@ export default function Dashboard() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            Loading POCs from Google Sheets...
+            Loading PoCs from Google Sheets...
           </div>
         ) : filteredPOCs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-gray-500">
             <div className="text-5xl mb-4">📋</div>
             {filter === "all" ? (
               <>
-                <p className="text-lg font-medium text-gray-400">No POC requests yet</p>
+                <p className="text-lg font-medium text-gray-400">No PoC requests yet</p>
                 <p className="text-sm mt-1 mb-4 text-gray-500">
                   Add rows to your Google Sheet, then run the agent
                 </p>
@@ -186,24 +186,24 @@ export default function Dashboard() {
                 </button>
               </>
             ) : (
-              <p className="text-gray-400">No {filter} POCs</p>
+              <p className="text-gray-400">No {filter} PoCs</p>
             )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredPOCs.map((poc) => (
-              <POCCard
+              <PoCCard
                 key={`${poc.rowIndex}-${poc.company}`}
                 poc={poc}
-                onClick={() => setSelectedPOC(poc)}
+                onClick={() => setSelectedPoC(poc)}
               />
             ))}
           </div>
         )}
       </main>
 
-      {selectedPOC && (
-        <DetailModal poc={selectedPOC} onClose={() => setSelectedPOC(null)} />
+      {selectedPoC && (
+        <DetailModal poc={selectedPoC} onClose={() => setSelectedPoC(null)} />
       )}
     </div>
   );

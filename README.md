@@ -1,6 +1,6 @@
-# ⚡ POC Qualification & Resource Routing Agent
+# ⚡ PoC Qualification & Resource Routing Agent
 
-Automatically qualifies incoming POC requests, researches prospects via Tavily, generates demo briefs via Claude, and routes to the right resource — all synced to Google Sheets.
+Automatically qualifies incoming PoC requests, researches prospects via Tavily, generates demo briefs via Claude, and routes to the right resource — all synced to Google Sheets.
 
 ## Problem
 
@@ -8,7 +8,7 @@ Product engineers get pulled into every demo without proper qualification. Wrong
 
 ## Solution
 
-An agent that watches a Google Sheet for new POC requests, auto-researches companies and buyers, qualifies technical complexity + buyer level, generates a demo prep brief, and updates the sheet — all automatically.
+An agent that watches a Google Sheet for new PoC requests, auto-researches companies and buyers, qualifies technical complexity + buyer level, generates a demo prep brief, and updates the sheet — all automatically.
 
 ## Workflow
 
@@ -16,7 +16,7 @@ An agent that watches a Google Sheet for new POC requests, auto-researches compa
 Sales adds row → Agent detects → Tavily researches → Claude qualifies → Sheet updated → Dashboard shows results
 ```
 
-1. **Sales adds POC** to Google Sheet (Company, Contact, Role, Use Case)
+1. **Sales adds PoC** to Google Sheet (Company, Contact, Role, Use Case)
 2. **Agent detects** new row (empty Research Notes column)
 3. **Tavily researches**: tech stack, K8s setup, team size, stage, news, buyer background
 4. **Claude qualifies**:
@@ -33,7 +33,7 @@ Sales adds row → Agent detects → Tavily researches → Claude qualifies → 
 ## Stack
 
 - **Next.js 16** (App Router) + TypeScript
-- **Google Sheets API** — watches for new POCs, writes results back
+- **Google Sheets API** — watches for new PoCs, writes results back
 - **Tavily Search API** — company + buyer research
 - **Anthropic Claude API** — qualification + brief generation
 - **Tailwind CSS** — dark dashboard UI
@@ -121,7 +121,7 @@ The `vercel.json` sets a 5-minute timeout for the agent function.
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| `GET` | `/api/pocs` | Fetch all POCs from sheet |
+| `GET` | `/api/pocs` | Fetch all PoCs from sheet |
 | `POST` | `/api/agent` | Trigger agent run |
 | `POST` | `/api/setup` | Initialize sheet headers |
 
@@ -132,13 +132,13 @@ app/
 ├── page.tsx              # Dashboard
 ├── api/
 │   ├── agent/route.ts    # Agent trigger
-│   ├── pocs/route.ts     # Fetch all POCs
+│   ├── pocs/route.ts     # Fetch all PoCs
 │   └── setup/route.ts    # Sheet init
 components/
-├── POCCard.tsx           # Color-coded POC card
+├── PoCCard.tsx           # Color-coded PoC card
 ├── AgentControls.tsx     # Run/refresh buttons
 ├── StatsBar.tsx          # Summary stats
-└── DetailModal.tsx       # Full POC detail view
+└── DetailModal.tsx       # Full PoC detail view
 lib/
 ├── types.ts              # TypeScript types
 ├── sheets.ts             # Google Sheets integration

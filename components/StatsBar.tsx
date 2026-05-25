@@ -1,8 +1,8 @@
 "use client";
 
-import { POCRequest } from "@/lib/types";
+import { PoCRequest } from "@/lib/types";
 
-export default function StatsBar({ pocs }: { pocs: POCRequest[] }) {
+export default function StatsBar({ pocs }: { pocs: PoCRequest[] }) {
   const qualified = pocs.filter((p) => p.status === "qualified");
   const pending = pocs.filter((p) => p.status === "pending" || p.status === "researching");
   const errors = pocs.filter((p) => p.status === "error");

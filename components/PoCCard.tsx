@@ -1,6 +1,6 @@
 "use client";
 
-import { POCRequest } from "@/lib/types";
+import { PoCRequest } from "@/lib/types";
 
 const complexityColor = (c?: string) => {
   if (c === "HIGH") return "bg-red-900/60 text-red-300 border-red-700";
@@ -37,7 +37,7 @@ const statusStyles: Record<string, string> = {
   error: "bg-red-900/60 text-red-300",
 };
 
-const cardBorderColor = (poc: POCRequest) => {
+const cardBorderColor = (poc: PoCRequest) => {
   if (poc.status === "error") return "border-red-800/60";
   if (poc.status === "researching") return "border-blue-700/60";
   if (poc.technicalComplexity === "HIGH") return "border-red-700/40";
@@ -46,11 +46,11 @@ const cardBorderColor = (poc: POCRequest) => {
   return "border-gray-700/60";
 };
 
-export default function POCCard({
+export default function PoCCard({
   poc,
   onClick,
 }: {
-  poc: POCRequest;
+  poc: PoCRequest;
   onClick: () => void;
 }) {
   return (
