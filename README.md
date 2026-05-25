@@ -1,6 +1,6 @@
 # ⚡ PoC Qualification & Resource Routing Agent
 
-> Automatically qualifies incoming PoC requests, researches prospects, generates demo briefs, and routes to the right resource — synced to Google Sheets.
+> Automatically qualifies incoming PoC requests, researches prospects, generates demo briefs, and routes to the right resource, synced to Google Sheets.
 
 Built for GTM and sales teams at **Platform Engineering**, **DevTools**, and **Developer Infrastructure** companies, where the wrong resource in a demo wastes weeks and poisons pipeline.
 
@@ -12,13 +12,13 @@ At developer-tooling companies, not all PoCs are equal — but they all get trea
 
 A startup founder kicking the tyres gets the same product engineer as a Series C platform team with a real Kubernetes migration problem. Senior engineering time gets burned on deals that an AE could close in a 30-minute walkthrough. Meanwhile, the deals that genuinely need deep technical engagement don't get enough of it.
 
-**The result:** misallocated resources, slow cycles, and deals lost at both ends — the ones you over-engineered and the ones you under-served.
+**The result:** misallocated resources, slow cycles, and deals lost at both ends; the ones you over-engineered and the ones you under-served.
 
 ---
 
 ## What It Does
 
-The agent watches a Google Sheet for new PoC requests. When it finds one, it:
+The agent watches a Google Sheet (or any other CRM if modified) for new PoC requests. When it finds one, it:
 
 1. **Researches the company** — tech stack, infrastructure setup, funding stage, team size, recent news (via Tavily)
 2. **Researches the buyer** — role level, technical background, seniority signals
