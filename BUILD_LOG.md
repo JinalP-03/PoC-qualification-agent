@@ -6,17 +6,17 @@
 
 ## Origin: Two Conversations That Collapsed Into One Idea
 
-### The Syntasso Interview
+### An interview
 
-During an interview with Syntasso, a recurring theme surfaced: the cost of pulling senior engineering resource into unqualified demos. The problem wasn't that sales teams were doing anything wrong — they were doing their job. The problem was the absence of a systematic qualification layer between "prospect books a call" and "product engineer joins the call."
+During an interview, a recurring theme surfaced: the cost of pulling senior engineering resource into unqualified demos. The problem wasn't that sales teams were doing anything wrong — they were doing their job. The problem was the absence of a systematic qualification layer between "prospect books a call" and "product engineer joins the call."
 
-Syntasso, like many developer tooling companies, has a product that requires technical credibility to sell. You can't fake your way through a Kubernetes platform engineering demo. But you also can't spend a senior engineer's afternoon on every inbound that fills out a form.
+The company, like many developer tooling companies, has a product that requires technical credibility to sell. You can't fake your way through a Kubernetes platform engineering demo. But you also can't spend a senior engineer's afternoon on every inbound that fills out a form.
 
 That conversation clarified something I'd observed but not fully articulated.
 
-### The Zuplo Parallel
+### The parallel experience
 
-At Zuplo, I'd seen the same dynamic from the inside. PoCs weren't just sales theatre — they were the real qualification event. By the time you're doing a PoC, you know whether the prospect can actually use the product and whether the deal has legs. But the cost of getting to that point varied wildly depending on who got pulled into the room.
+In another company, I'd seen the same dynamic from the inside. PoCs weren't just sales theatre — I viewed them as the real qualification event. By the time you're doing a PoC, you know whether the prospect can actually use the product and whether the deal has legs. But the cost of getting to that point varied wildly depending on who got pulled into the room.
 
 I'd been thinking about PoCs as serving two distinct purposes that most teams conflate:
 
@@ -28,7 +28,7 @@ Most teams optimise for the second purpose and ignore the first. They assume qua
 
 ### The Build
 
-Friday, 23 May 2026. Encode AI's Build Day — sponsored by Nevius, Tabily, and Vercel. Eight hours to build something real.
+Friday, 23 May 2026. Encode AI's Build Day — sponsored by Nebius, Tavily, and Vercel. Eight hours to build something real.
 
 I built the PoC Qualification Agent.
 
@@ -38,13 +38,13 @@ I built the PoC Qualification Agent.
 
 ### Friday 23 May — Build Day (Encode AI)
 
-**Morning:** Scoped the problem and committed to the approach. Decided to build around Google Sheets as the data layer because that's what GTM teams actually use — not a database, not a CRM, a spreadsheet. The agent needed to meet sales teams where they are.
+**Morning:** Scoped the problem and committed to the approach. Decided to build around Google Sheets as the data layer because that's what GTM teams actually use — not always a database or CRM, but a spreadsheet. The agent needed to meet Sales teams where they are.
 
 Chose OAuth over a service account. Initial thinking was service account (simpler setup), but OAuth means the agent acts on behalf of the user who owns the sheet — no manual sharing step, no permission management, tokens auto-refresh. Better for a real deployment.
 
 **Afternoon:** Core pipeline working end-to-end — Tavily research, Claude qualification, sheet writes. The routing logic (`HIGH + Technical → Product Engineer Required`) came together cleanly. The parallel generation (demo brief + draft email + business fit in `Promise.all`) shaved meaningful time off each PoC run.
 
-**Evening:** Dashboard built. Dark UI with colour-coded routing cards. Filter tabs by status. Detail modal for full brief + email + business fit. Sign-in flow with NextAuth.
+**Evening:** Dashboard built (+and after 2.5+ hours of debugging!). Dark UI with colour-coded routing cards. Filter tabs by status. Detail modal for full brief + email + business fit. Sign-in flow with NextAuth.
 
 ### Monday 26 May — Fixes + Deployment
 
